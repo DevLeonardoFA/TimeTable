@@ -1,0 +1,22 @@
+[
+    {
+        "name": "Sergey Brin",
+        "professor": true
+    },
+    {
+        "name": "Linus Torvalds",
+        "professor": true
+    },
+    {
+        "name": "Tim Berners-Lee",
+        "professor": true
+    },
+    {
+        "name": "Bill Gates",
+        "professor": true
+    },
+    {
+        "name": "Lorem Ipsum",
+        "professor": true
+    }
+]
