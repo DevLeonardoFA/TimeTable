@@ -10,21 +10,25 @@
 
             <!-- Blocos de aulas -->
             <div v-for="(classItem, index) in classes" :key="index" class="class-block"
-                :style="getClassStyle(classItem)">
+                :style="getClassStyle(classItem)" @click="editClass(index)">
                 {{ classItem.subject }}
             </div>
         </div>
 
         <!-- Formulário para adicionar aulas -->
         <div class="form">
-            <h3>Adicionar Aula</h3>
+            <h3>{{ isEditing ? "Editar Aula" : "Adicionar Aula" }}</h3>
             <input v-model="newClass.subject" placeholder="Nome da matéria" />
             <select v-model="newClass.day">
                 <option v-for="day in days" :key="day" :value="day">{{ day }}</option>
             </select>
             <input v-model="newClass.startTime" type="time" />
             <input v-model="newClass.endTime" type="time" />
-            <button @click="addClass">Adicionar</button>
+            <button @click="isEditing ? updateClass() : addClass()">
+                {{ isEditing ? "Atualizar" : "Adicionar" }}
+            </button>
+            <button v-if="isEditing" @click="deleteClass()">Excluir</button>
+            <button v-if="isEditing" @click="cancelEdit()">Cancelar</button>
         </div>
     </div>
 </template>
@@ -51,6 +55,11 @@ const newClass = ref({
     endTime: "09:20"
 });
 
+
+const isEditing = ref(false);
+const editingIndex = ref(null);
+
+
 const addClass = () => {
     if (!newClass.value.subject || !newClass.value.startTime || !newClass.value.endTime) {
         alert("Preencha todos os campos!");
@@ -60,8 +69,10 @@ const addClass = () => {
     // Verificar se já existe uma aula no mesmo horário e dia
     const conflict = classes.value.some(c =>
         c.day === newClass.value.day &&
-        ((c.startTime >= newClass.value.startTime && c.startTime < newClass.value.endTime) ||
-            (c.endTime > newClass.value.startTime && c.endTime <= newClass.value.endTime))
+        (
+            (c.startTime >= newClass.value.startTime && c.startTime < newClass.value.endTime) ||
+            (c.endTime > newClass.value.startTime && c.endTime <= newClass.value.endTime)
+        )
     );
 
     if (conflict) {
@@ -70,8 +81,57 @@ const addClass = () => {
     }
 
     classes.value.push({ ...newClass.value });
-    newClass.value.subject = "";
+    // newClass.value.subject = "";
+    resetForm();
 };
+
+const editClass = (index) => {
+
+    newClass.value = { ...classes.value[index] };
+    editingIndex.value = index;
+    isEditing.value = true;
+
+}
+
+const updateClass = () => {
+
+    if(editingIndex.value !== null){
+
+        classes.value[editingIndex.value] = { ...newClass.value };
+        resetForm();
+
+    }
+
+}
+
+const deleteClass = () => {
+
+    if (editingIndex.value !== null) {
+        classes.value.splice(editingIndex.value, 1);
+        resetForm();
+    }
+
+}
+
+
+const cancelEdit = () => {
+    resetForm();
+}
+
+const resetForm = () => {
+
+    newClass.value = {
+        subject: "",
+        day: "Mon",
+        startTime: "08:30",
+        endTime: "09:20"
+    };
+
+    isEditing.value = false;
+    editingIndex.value = null;
+
+}
+
 
 const getClassStyle = (classItem) => {
     const dayIndex = days.value.indexOf(classItem.day) + 1;
@@ -82,8 +142,10 @@ const getClassStyle = (classItem) => {
         "grid-column": dayIndex + 1,  // Ajuste para alinhar corretamente
         "grid-row-start": startIndex,
         "grid-row-end": endIndex,
+        "cursor": "pointer"
     };
 };
+
 </script>
 
 
