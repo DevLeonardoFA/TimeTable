@@ -37,27 +37,50 @@
 
 
 <script setup>
-import { ref } from 'vue';
+
+import { ref, onMounted, watch } from 'vue';
+
+const API_URL = "http://localhost:3001/classes";
 
 const days = ref(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
 const hours = ref(["07:40", "08:30", "09:20", "10:10", "11:00", "11:50", "12:40"]);
-
-const classes = ref([
-    { subject: "Java I", day: "Mon", startTime: "07:40", endTime: "08:30" },
-    { subject: "Web II", day: "Wed", startTime: "07:40", endTime: "08:30" },
-    { subject: "Software Engineering II", day: "Wed", startTime: "08:30", endTime: "11:50" }
-]);
-
-const newClass = ref({
-    subject: "",
-    day: "Mon",
-    startTime: "08:30",
-    endTime: "09:20"
-});
-
+const classes = ref([]);
 
 const isEditing = ref(false);
 const editingIndex = ref(null);
+
+
+// Carregar os horários do backend
+const loadClasses = async () => {
+    try {
+        const response = await fetch(API_URL);
+        classes.value = await response.json();
+    } catch (error) {
+        console.error("Erro ao carregar horários:", error);
+    }
+};
+
+// Salvar os horários no backend
+const saveClasses = async () => {
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(classes.value)
+        });
+    } catch (error) {
+        console.error("Erro ao salvar horários:", error);
+    }
+};
+
+// Carrega os dados ao iniciar
+onMounted(loadClasses);
+
+// Salva os dados sempre que houver mudanças
+watch(classes, saveClasses, { deep: true });
+
+const newClass = ref({ subject: "", day: "Mon", startTime: "08:30", endTime: "09:20" });
+
 
 
 const addClass = () => {
@@ -65,24 +88,8 @@ const addClass = () => {
         alert("Preencha todos os campos!");
         return;
     }
-
-    // Verificar se já existe uma aula no mesmo horário e dia
-    const conflict = classes.value.some(c =>
-        c.day === newClass.value.day &&
-        (
-            (c.startTime >= newClass.value.startTime && c.startTime < newClass.value.endTime) ||
-            (c.endTime > newClass.value.startTime && c.endTime <= newClass.value.endTime)
-        )
-    );
-
-    if (conflict) {
-        alert("Conflito de horário! Escolha outro horário.");
-        return;
-    }
-
     classes.value.push({ ...newClass.value });
-    // newClass.value.subject = "";
-    resetForm();
+    newClass.value = { subject: "", day: "Mon", startTime: "08:30", endTime: "09:20" };
 };
 
 const editClass = (index) => {
@@ -137,13 +144,7 @@ const getClassStyle = (classItem) => {
     const dayIndex = days.value.indexOf(classItem.day) + 1;
     const startIndex = hours.value.indexOf(classItem.startTime) + 2;
     const endIndex = hours.value.indexOf(classItem.endTime) + 2;
-
-    return {
-        "grid-column": dayIndex + 1,  // Ajuste para alinhar corretamente
-        "grid-row-start": startIndex,
-        "grid-row-end": endIndex,
-        "cursor": "pointer"
-    };
+    return { "grid-column": dayIndex + 1, "grid-row-start": startIndex, "grid-row-end": endIndex };
 };
 
 </script>
